@@ -1,0 +1,4 @@
+Newton's Laws of Motion:
+1. An object at rest stays at rest & object in motion stays in motion unless acted upon by an external force.
+2. Force = Mass * Acceleration
+3. Every action has an equal and opposite reaction.

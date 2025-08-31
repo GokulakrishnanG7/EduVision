@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduVision Translator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+body, html { margin:0; padding:0; height:100%; font-family: 'Poppins', sans-serif; color:#fff; overflow-x:hidden; transition: background 0.5s, color 0.5s; }
+body.dark { background: radial-gradient(ellipse at bottom,#0d1b2a,#000 90%); color:#fff; }
+.container { text-align:center; padding:40px; position:relative; z-index:1; max-width:900px; margin:0 auto; }
+.title { font-size:2.4rem; text-shadow:0 0 15px #00f7ff,0 0 30px #ff00ff; margin-bottom:20px; }
+.card { background: rgba(20,20,40,0.85); border-radius:15px; padding:25px; margin:20px auto; box-shadow:0 0 25px rgba(0,255,255,0.4),0 0 40px rgba(255,0,255,0.3); backdrop-filter:blur(6px); }
+.neon-btn { padding:12px 28px; border:none; border-radius:30px; background:linear-gradient(90deg,#00f7ff,#ff00ff); color:#fff; font-size:1.05rem; cursor:pointer; box-shadow:0 0 15px #00f7ff,0 0 30px #ff00ff; }
+.neon-btn:hover { transform:scale(1.03); }
+.input, textarea, select { width:100%; box-sizing:border-box; padding:12px; border-radius:10px; border:none; background:#111; color:#fff; }
+pre { background:#1e1e2f; color:#fff; padding: 15px; border-radius: 10px; text-align:left; white-space: pre-wrap; word-wrap: break-word; max-height:400px; overflow-y:auto; font-size:16px; }
+.row { display:grid; grid-template-columns: 1fr; gap:16px; }
+@media(min-width:1000px){ .row { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body class="dark">
+<div class="container">
+  <h1 class="title">🌍 EduVision Translator + Summarizer + Voice</h1>
+
+  <div class="card">
+    <textarea id="srcText" rows="7" class="input" placeholder="Enter text to translate & summarize..."></textarea>
+    <div class="row" style="margin-top:10px;">
+      <div>
+        <label for="langSel">Target language:</label>
+        <select id="langSel" class="input">
+          {% for code, name in languages.items() %}
+          <option value="{{ code }}">{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="voiceSel">Voice Engine:</label>
+        <select id="voiceSel" class="input">
+          <option value="online">Online (gTTS)</option>
+          <option value="offline">Offline (Assistant Voice)</option>
+        </select>
+      </div>
+    </div>
+    <button class="neon-btn" style="margin-top:10px;" onclick="doTranslate()">Summarize, Translate & Speak</button>
+  </div>
+
+  <!-- Favorites Dropdown -->
+  <div class="card">
+    <h3>⭐ Favorites</h3>
+    <select id="favDropdown" class="input" onchange="openFavorite()">
+      <option value="">Select a favorite file...</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h3>📌 Summary</h3>
+      <pre id="sumBox"></pre>
+    </div>
+    <div class="card">
+      <h3>🌐 Translated</h3>
+      <pre id="trBox"></pre>
+      <audio id="trAudio" controls style="margin-top:10px; width:100%;"></audio>
+    </div>
+  </div>
+
+  <div class="card">
+    <button class="neon-btn" onclick="window.location.href='/'">⬅️ Back</button>
+  </div>
+</div>
+
+<script>
+async function doTranslate(){
+  const text = document.getElementById('srcText').value.trim();
+  const target_lang = document.getElementById('langSel').value;
+  const voice_engine = document.getElementById('voiceSel').value;
+  if(!text){ alert("Please enter some text."); return; }
+
+  try{
+    const res = await fetch("/api/summarize_translate_speak", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ text, target_lang, voice_engine })
+    });
+    const data = await res.json();
+    if(data.error){ alert(data.error); return; }
+    document.getElementById('sumBox').innerText = data.summary || "";
+    document.getElementById('trBox').innerText = data.translated || "";
+    const audioEl = document.getElementById('trAudio');
+    if(data.audio_url){ audioEl.src = data.audio_url; audioEl.play(); }
+    else { audioEl.removeAttribute('src'); }
+  }catch(e){
+    alert("Failed: " + e);
+  }
+}
+
+// ===== Favorites Integration =====
+let favorites = [];
+
+async function fetchFavorites(){
+  try{
+    const res = await fetch("/list_favorites");
+    const data = await res.json();
+    favorites = data.favorites || [];
+    const dropdown = document.getElementById('favDropdown');
+    dropdown.innerHTML = '<option value="">Select a favorite file...</option>';
+    favorites.forEach(f=>{
+      const opt = document.createElement("option");
+      opt.value = f;
+      opt.text = f;
+      dropdown.appendChild(opt);
+    });
+  }catch(e){ console.error("Failed fetching favorites:", e); }
+}
+
+function openFavorite(){
+  const file = document.getElementById('favDropdown').value;
+  if(file) window.location.href = `/explanation?file=${encodeURIComponent(file)}`;
+}
+
+// Fetch favorites on load
+window.addEventListener("DOMContentLoaded", ()=>{ fetchFavorites(); });
+</script>
+</body>
+</html>

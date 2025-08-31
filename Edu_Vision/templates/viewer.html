@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduVision Viewer</title>
+<style>
+/* ===== Common Cosmic Theme ===== */
+body, html {
+  margin:0; padding:0; height:100%;
+  font-family: 'Poppins', sans-serif;
+  color:#fff;
+  overflow-x:hidden;
+}
+body.dark {
+  background: radial-gradient(ellipse at bottom,#0d1b2a,#000 90%);
+  color:#fff;
+}
+
+/* Stars + Nebula */
+.stars, .nebula { position:fixed; inset:0; z-index:-2; }
+.stars {
+  background:url("https://www.transparenttextures.com/patterns/stardust.png") repeat;
+  opacity:0.7; animation: moveStars 120s linear infinite;
+}
+@keyframes moveStars { from{transform:translateY(0);} to{transform:translateY(-100%);} }
+.nebula {
+  background: radial-gradient(circle at 30% 30%, rgba(0,255,255,0.25), transparent 60%), 
+              radial-gradient(circle at 70% 70%, rgba(255,0,255,0.25), transparent 60%);
+  filter:blur(60px); animation: nebulaGlow 8s ease-in-out infinite alternate;
+}
+@keyframes nebulaGlow { from{opacity:0.6;} to{opacity:1;} }
+
+/* Title */
+.title {
+  font-size:2.5rem;
+  text-align:center;
+  margin-top:25px;
+  text-shadow:0 0 15px #00f7ff,0 0 30px #ff00ff;
+  animation: glowPulse 2s infinite alternate;
+}
+@keyframes glowPulse {
+  from{text-shadow:0 0 10px #00f7ff,0 0 20px #ff00ff;}
+  to{text-shadow:0 0 40px #ff00ff,0 0 80px #00f7ff;}
+}
+
+/* Viewer Box */
+.viewer-box {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 25px;
+  background: rgba(20,20,40,0.85);
+  border-radius: 15px;
+  box-shadow:0 0 25px rgba(0,255,255,0.4),0 0 40px rgba(255,0,255,0.3);
+  backdrop-filter:blur(6px);
+}
+.content {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: 16px;
+  color: #f0f0f0;
+}
+
+/* Buttons */
+.btn-container {
+  margin-top: 20px;
+  text-align: center;
+}
+.neon-btn {
+  padding:12px 28px;
+  border:none;
+  border-radius:30px;
+  background:linear-gradient(90deg,#00f7ff,#ff00ff);
+  color:#fff;
+  font-size:1.1rem;
+  cursor:pointer;
+  box-shadow:0 0 15px #00f7ff,0 0 30px #ff00ff;
+  transition:transform 0.2s, box-shadow 0.2s;
+}
+.neon-btn:hover {
+  transform:scale(1.1);
+  box-shadow:0 0 30px #00f7ff,0 0 60px #ff00ff;
+}
+</style>
+</head>
+<body class="dark">
+<div class="stars"></div>
+<div class="nebula"></div>
+
+<h1 class="title" id="fileTitle">📄 File Viewer</h1>
+
+<div class="viewer-box">
+  <div class="content" id="fileContent">Loading content...</div>
+</div>
+
+<div class="btn-container">
+  <button class="neon-btn" onclick="openExplanation(fileName)">✨ NLP Explanation</button>
+</div>
+
+<script>
+// Get file name from query
+const params = new URLSearchParams(window.location.search);
+const fileName = params.get("file");
+document.getElementById("fileTitle").innerText = "📄 " + fileName;
+
+// Simulated file content (replace with real file reading later)
+function fetchFileContent(file){
+  return `This is the raw content of ${file}.
+Displayed inside EduVision Viewer with cosmic neon theme.`;
+}
+document.getElementById("fileContent").innerText = fetchFileContent(fileName);
+
+// Open Explanation page
+function openExplanation(fileName){
+  window.open("explanation.html?file=" + encodeURIComponent(fileName), "_blank");
+}
+</script>
+</body>
+</html>

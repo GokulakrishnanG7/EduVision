@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduVision Explanation</title>
+<style>
+/* ===== Cosmic Theme ===== */
+body, html {margin:0; padding:0; height:100%; font-family: 'Poppins', sans-serif; color:#fff; overflow-x:hidden;}
+body.dark {background: radial-gradient(ellipse at bottom,#0d1b2a,#000 90%); color:#fff;}
+.stars, .nebula { position:fixed; inset:0; z-index:-2; }
+.stars {background:url("https://www.transparenttextures.com/patterns/stardust.png") repeat; opacity:0.7; animation: moveStars 120s linear infinite;}
+@keyframes moveStars { from{transform:translateY(0);} to{transform:translateY(-100%);} }
+.nebula {background: radial-gradient(circle at 30% 30%, rgba(0,255,255,0.25), transparent 60%), radial-gradient(circle at 70% 70%, rgba(255,0,255,0.25), transparent 60%); filter:blur(60px); animation: nebulaGlow 8s ease-in-out infinite alternate;}
+@keyframes nebulaGlow { from{opacity:0.6;} to{opacity:1;} }
+
+.title { font-size:2.5rem; text-align:center; margin-top:25px; text-shadow:0 0 15px #00f7ff,0 0 30px #ff00ff; animation: glowPulse 2s infinite alternate; }
+@keyframes glowPulse { from{text-shadow:0 0 10px #00f7ff,0 0 20px #ff00ff;} to{text-shadow:0 0 40px #ff00ff,0 0 80px #00f7ff;} }
+
+.explainer-box { max-width:800px; margin:40px auto; padding:25px; background: rgba(20,20,40,0.85); border-radius:15px; box-shadow:0 0 25px rgba(0,255,255,0.4),0 0 40px rgba(255,0,255,0.3); backdrop-filter:blur(6px); }
+.explainer-content { line-height:1.6; font-size:17px; color:#f5f5f5; white-space: pre-wrap; }
+.glossary-box { margin-top:15px; padding:10px; background: rgba(255,255,255,0.05); border-radius:10px; max-height:200px; overflow-y:auto; }
+.glossary-box h3 { margin:0 0 5px; font-size:1.1rem; color:#00f7ff; }
+.glossary-box ul { margin:0; padding-left:20px; }
+
+.btn-container { margin-top:20px; text-align:center; }
+.neon-btn { padding:12px 28px; border:none; border-radius:30px; background:linear-gradient(90deg,#00f7ff,#ff00ff); color:#fff; font-size:1.1rem; cursor:pointer; box-shadow:0 0 15px #00f7ff,0 0 30px #ff00ff; transition:transform 0.2s, box-shadow 0.2s; }
+.neon-btn:hover { transform:scale(1.1); box-shadow:0 0 30px #00f7ff,0 0 60px #ff00ff; }
+
+/* ===== Mute Button ===== */
+#muteBtn { position:fixed; top:15px; right:15px; padding:10px 15px; border:none; border-radius:50px; background:rgba(255,0,255,0.7); color:#fff; cursor:pointer; z-index:10; }
+#muteBtn:hover { background:rgba(255,0,255,1); }
+</style>
+</head>
+<body class="dark">
+<div class="stars"></div>
+<div class="nebula"></div>
+
+<h1 class="title" id="fileTitle">✨ NLP Explanation</h1>
+
+<button id="muteBtn">🔇 Mute</button>
+
+<div class="explainer-box">
+  <div class="explainer-content" id="explanationContent">
+    Loading explanation...
+  </div>
+  <div class="glossary-box" id="glossaryBox" style="display:none;">
+    <h3>📚 Glossary:</h3>
+    <ul id="glossaryList"></ul>
+  </div>
+</div>
+
+<div class="btn-container">
+  <button class="neon-btn" onclick="goBack()">🔙 Back to Viewer</button>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const fileName = params.get("file");
+document.getElementById("fileTitle").innerText = "✨ NLP Explanation for " + fileName;
+
+let audioObj = null;
+let isMuted = false;
+
+// ===== Fetch Explanation =====
+async function fetchExplanation(file){
+  try {
+    const res = await fetch(`/get_file_content?file=${encodeURIComponent(file)}`);
+    const data = await res.json();
+    if(data.error){
+      document.getElementById("explanationContent").innerText = "Error: " + data.error;
+      return;
+    }
+
+    // Display explanation
+    const combined = `Original Text:\n${data.text}\n\n✨ Explanation:\n${data.explanation}`;
+    document.getElementById("explanationContent").innerText = combined;
+
+    // Display glossary nicely
+    const glossaryBox = document.getElementById("glossaryBox");
+    const glossaryList = document.getElementById("glossaryList");
+    glossaryList.innerHTML = "";
+    if(data.glossary && Object.keys(data.glossary).length>0){
+      glossaryBox.style.display = "block";
+      for(const [term, meaning] of Object.entries(data.glossary)){
+        const li = document.createElement("li");
+        li.textContent = `${term}: ${meaning}`;
+        glossaryList.appendChild(li);
+      }
+    } else { glossaryBox.style.display="none"; }
+
+    // ===== Auto TTS in detected language =====
+    if(data.audio_url && !isMuted){
+      if(audioObj){ audioObj.pause(); audioObj = null; }
+      audioObj = new Audio(data.audio_url);
+      audioObj.preload = "auto";
+      audioObj.play().catch(()=>console.log("Audio playback failed"));
+    }
+
+  } catch(e){
+    document.getElementById("explanationContent").innerText = "Error fetching explanation.";
+    console.error(e);
+  }
+}
+
+// ===== Mute Button =====
+document.getElementById("muteBtn").addEventListener("click", ()=>{
+  if(audioObj){
+    if(isMuted){
+      audioObj.play();
+      isMuted = false;
+      document.getElementById("muteBtn").innerText = "🔇 Mute";
+    } else {
+      audioObj.pause();
+      isMuted = true;
+      document.getElementById("muteBtn").innerText = "🔊 Unmute";
+    }
+  }
+});
+
+// ===== Back Button =====
+function goBack(){ window.location.href = "/"; }
+
+window.addEventListener("DOMContentLoaded", ()=>{
+  if(fileName) fetchExplanation(fileName);
+});
+</script>
+</body>
+</html>

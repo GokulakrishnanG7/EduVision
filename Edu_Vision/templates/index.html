@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduVision Cosmic Portal</title>
+<style>
+/* Existing cosmic theme and card styles remain unchanged */
+body, html { margin:0; padding:0; height:100%; font-family: 'Poppins', sans-serif; color:#fff; overflow-x:hidden; transition: background 0.5s, color 0.5s; }
+body.dark { background: radial-gradient(ellipse at bottom,#0d1b2a,#000 90%); color:#fff; }
+.stars, .nebula { position:fixed; inset:0; z-index:-2; }
+.stars { background:url("https://www.transparenttextures.com/patterns/stardust.png") repeat; opacity:0.7; animation: moveStars 120s linear infinite; }
+@keyframes moveStars { from{transform:translateY(0);} to{transform:translateY(-100%);} }
+.nebula { background: radial-gradient(circle at 30% 30%, rgba(0,255,255,0.25), transparent 60%), radial-gradient(circle at 70% 70%, rgba(255,0,255,0.25), transparent 60%); filter:blur(60px); animation: nebulaGlow 8s ease-in-out infinite alternate; }
+@keyframes nebulaGlow { from{opacity:0.6;} to{opacity:1;} }
+.container { text-align:center; padding:40px; position:relative; z-index:1; max-width:600px; margin:0 auto; }
+.title { font-size:3rem; text-shadow:0 0 15px #00f7ff,0 0 30px #ff00ff; margin-bottom:25px; animation: glowPulse 2s infinite alternate; transition: color 0.5s, text-shadow 0.5s; }
+@keyframes glowPulse { from{text-shadow:0 0 10px #00f7ff,0 0 20px #ff00ff;} to{text-shadow:0 0 40px #ff00ff,0 0 80px #00f7ff;} }
+.card { background: rgba(20,20,40,0.85); border-radius:15px; padding:25px; margin:20px auto; box-shadow:0 0 25px rgba(0,255,255,0.4),0 0 40px rgba(255,0,255,0.3); backdrop-filter:blur(6px); transition: transform 0.3s, background 0.5s, box-shadow 0.5s; }
+.card:hover { transform:scale(1.03); }
+.file-input, #searchInput, #sortSelect, #existingFiles { width:85%; padding:12px; margin:10px 0; border:none; border-radius:10px; background:#111; color:#fff; font-size:1rem; outline:none; box-shadow:0 0 12px #00f7ff inset,0 0 8px #ff00ff; transition: background 0.5s, color 0.5s, box-shadow 0.5s; }
+.neon-btn { padding:12px 28px; border:none; border-radius:30px; background:linear-gradient(90deg,#00f7ff,#ff00ff); color:#fff; font-size:1.1rem; cursor:pointer; box-shadow:0 0 15px #00f7ff,0 0 30px #ff00ff; transition:transform 0.2s, box-shadow 0.2s; }
+.neon-btn:hover { transform:scale(1.1); box-shadow:0 0 30px #00f7ff,0 0 60px #ff00ff; }
+.file-list { list-style:none; padding:0; margin:15px 0 0; text-align:left; max-height:200px; overflow-y:auto; transition: background 0.5s; }
+.file-list li { background: rgba(255,255,255,0.05); padding:12px; margin:6px 0; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; transition: background 0.3s, transform 0.2s; }
+.favorite-icon { margin-left:auto; cursor:pointer; font-size:1.2rem; color:gold; text-shadow:0 0 6px gold; transition: transform 0.2s, text-shadow 0.2s; }
+.delete-icon { cursor:pointer; font-size:1.2rem; color:#ff5555; margin-left:10px; transition: transform 0.2s; }
+.delete-icon:hover { transform: scale(1.2); }
+.modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; justify-content:center; align-items:center; z-index:1000; }
+.modal-content { background:#111; padding:20px 30px; border-radius:12px; text-align:center; box-shadow:0 0 15px #00f7ff,0 0 30px #ff00ff; max-width:300px; }
+.modal-content p { margin-bottom:20px; font-size:1.1rem; }
+.modal-content button { margin:0 10px; }
+@media (max-width:650px){ .container{padding:20px;} .title{font-size:2.2rem;} .card{padding:20px;} }
+</style>
+</head>
+<body class="dark">
+<div class="stars"></div>
+<div class="nebula"></div>
+
+<div class="container">
+<h1 class="title">✨EduVision✨</h1>
+
+<!-- Mode Toggle -->
+<button class="neon-btn" onclick="toggleMode()">Toggle Light/Dark Mode</button>
+
+<!-- Translator Button Fixed -->
+<button class="neon-btn" onclick="window.location.href='/translator'" style="margin-top:10px;">🌐 Translator</button>
+
+<!-- Upload Section -->
+<div class="card">
+  <h2>🚀 Upload File(s)</h2>
+  <input type="file" id="fileInput" class="file-input" multiple aria-label="Upload files">
+  <br>
+  <button class="neon-btn" onclick="uploadFile()">Upload</button>
+</div>
+
+<!-- Search & Sort Section -->
+<div class="card">
+  <h2>🔎 Search & Select Existing File</h2>
+  <input type="text" id="searchInput" placeholder="Search files..." onkeyup="searchFiles()" aria-label="Search files">
+  <select id="sortSelect" class="file-input" onchange="renderFiles(uploadedFiles)" aria-label="Sort files">
+    <option value="">Sort by Name</option>
+    <option value="asc">A → Z</option>
+    <option value="desc">Z → A</option>
+  </select>
+  <ul id="fileList" class="file-list" tabindex="0" aria-label="List of uploaded files"></ul>
+  <label for="existingFiles" style="display:block;margin-top:15px;">Or select from dropdown:</label>
+  <select id="existingFiles" class="file-input" onchange="selectExistingFile()" aria-label="Select existing file"></select>
+  <button class="neon-btn" onclick="toggleFavoriteFilter()" style="margin-top:10px;">⭐ Toggle Favorites Filter</button>
+</div>
+</div>
+
+<!-- Modal for Delete Confirmation -->
+<div id="deleteModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <p id="modalText">Confirm to delete?</p>
+    <button onclick="confirmDelete(true)">Yes</button>
+    <button onclick="confirmDelete(false)">No</button>
+  </div>
+</div>
+
+<script>
+let uploadedFiles = [];
+let favorites = new Set();
+let filterFavorites = false;
+let fileToDelete = null;
+
+function toggleMode(){
+  document.body.classList.toggle("light");
+  document.body.classList.toggle("dark");
+}
+
+async function uploadFile(){
+  const input = document.getElementById("fileInput");
+  if(input.files.length===0){ alert("Select at least one file!"); return; }
+  const formData = new FormData();
+  for(const f of input.files){ formData.append("files", f); }
+
+  try {
+    const res = await fetch("/upload_file",{method:"POST", body:formData});
+    const data = await res.json();
+    uploadedFiles = Array.from(new Set([...uploadedFiles, ...data.uploaded_files]));
+    renderFiles(uploadedFiles);
+    alert("Files uploaded successfully!");
+  } catch(e){
+    console.error(e);
+    alert("Error uploading files.");
+  }
+}
+
+function renderFiles(files){
+  const list = document.getElementById("fileList");
+  const dropdown = document.getElementById("existingFiles");
+  list.innerHTML=""; dropdown.innerHTML="";
+  let displayFiles = filterFavorites ? files.filter(f=>favorites.has(f)) : [...files];
+  const sortValue = document.getElementById("sortSelect").value;
+  if(sortValue==="asc") displayFiles.sort();
+  if(sortValue==="desc") displayFiles.sort().reverse();
+
+  for(const f of displayFiles){
+    const li = document.createElement("li");
+    li.textContent = f;
+    li.onclick = ()=>{ window.location.href=`/explanation?file=${encodeURIComponent(f)}`; }
+
+    const favIcon = document.createElement("span");
+    favIcon.className="favorite-icon";
+    favIcon.textContent = favorites.has(f)?"★":"☆";
+    favIcon.onclick = (e)=>{ e.stopPropagation(); toggleFavorite(f, favIcon); };
+
+    const delIcon = document.createElement("span");
+    delIcon.className = "delete-icon";
+    delIcon.innerHTML = "🗑️";
+    delIcon.onclick = (e)=>{ e.stopPropagation(); showDeleteModal(f); };
+
+    li.appendChild(favIcon);
+    li.appendChild(delIcon);
+    list.appendChild(li);
+
+    const option = document.createElement("option"); option.value=f; option.text=f;
+    dropdown.appendChild(option);
+  }
+}
+
+function toggleFavorite(file, iconElem){
+  if(favorites.has(file)){ favorites.delete(file); iconElem.textContent="☆"; }
+  else{ favorites.add(file); iconElem.textContent="★"; }
+  if(filterFavorites) renderFiles(uploadedFiles);
+}
+
+function toggleFavoriteFilter(){
+  filterFavorites = !filterFavorites;
+  renderFiles(uploadedFiles);
+}
+
+function selectExistingFile(){
+  const file = document.getElementById("existingFiles").value;
+  if(file) window.location.href=`/explanation?file=${encodeURIComponent(file)}`;
+}
+
+function searchFiles(){
+  const query = document.getElementById("searchInput").value.toLowerCase();
+  renderFiles(uploadedFiles.filter(f=>f.toLowerCase().includes(query)));
+}
+
+// ===== Delete Modal =====
+function showDeleteModal(file){
+  fileToDelete = file;
+  document.getElementById("modalText").textContent = `Confirm delete "${file}"?`;
+  document.getElementById("deleteModal").style.display = "flex";
+}
+
+async function confirmDelete(isConfirmed){
+  document.getElementById("deleteModal").style.display = "none";
+  if(isConfirmed && fileToDelete){
+    try{
+      const res = await fetch(`/delete_file?file=${encodeURIComponent(fileToDelete)}`, { method: "DELETE" });
+      const data = await res.json();
+      if(data.success){
+        uploadedFiles = uploadedFiles.filter(f=>f!==fileToDelete);
+        favorites.delete(fileToDelete);
+        renderFiles(uploadedFiles);
+      } else { alert("Error deleting file."); }
+    } catch(e){ console.error(e); alert("Error deleting file."); }
+  }
+  fileToDelete = null;
+}
+
+// ===== Continuous Voice Command =====
+function startContinuousVoiceCommand(){
+  if(!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)){
+    alert("Your browser does not support voice commands.");
+    return;
+  }
+  const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  recognition.continuous = true;
+  recognition.start();
+
+  recognition.onresult = function(event){
+    const command = event.results[event.results.length-1][0].transcript.toLowerCase().trim();
+    console.log("Voice Command:", command);
+    if(command.startsWith("read ")){
+      const fileQuery = command.replace("read ","").trim().replace(/ /g,"_");
+      const fileMatch = uploadedFiles.find(f => f.toLowerCase().includes(fileQuery));
+      if(fileMatch){
+        window.location.href = `/explanation?file=${encodeURIComponent(fileMatch)}`;
+      } else { alert(`File not found for command: "${command}"`); }
+    }
+  };
+  recognition.onerror = function(event){ console.error("Voice recognition error:", event); recognition.stop(); recognition.start(); };
+  recognition.onend = function(){ recognition.start(); };
+}
+
+// ===== Fetch persisted files on page load =====
+window.addEventListener("DOMContentLoaded", async ()=>{
+  try {
+    const res = await fetch("/list_files");
+    const data = await res.json();
+    if(data.files) uploadedFiles = data.files;
+  } catch(e){ console.error("Error fetching existing files:", e); }
+  renderFiles(uploadedFiles);
+  startContinuousVoiceCommand();
+  const msg = new SpeechSynthesisUtterance("Welcome to EduVision. Select or say a file name to get your explanation.");
+  msg.lang = "en-US"; msg.rate = 1.1; speechSynthesis.speak(msg);
+});
+</script>
+</body>
+</html>
